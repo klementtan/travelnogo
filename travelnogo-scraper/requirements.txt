@@ -1,0 +1,8 @@
+bs4
+requests
+pycountry
+datetime
+pandas
+lxml
+demjson
+python-dotenv
