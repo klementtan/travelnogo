@@ -1,0 +1,58 @@
+# MySQL. Versions 5.5.8 and up are supported.
+#
+# Install the MySQL driver
+#   gem install mysql2
+#
+# Ensure the MySQL gem is defined in your Gemfile
+#   gem 'mysql2'
+#
+# And be sure to use new-style password hashing:
+#   https://dev.mysql.com/doc/refman/5.7/en/password-hashing.html
+#
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  # For details on connection pooling, see Rails configuration guide
+  # https://guides.rubyonrails.org/configuring.html#database-pooling
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+
+development:
+  <<: *default
+  database: travelnogo_api_development
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  <<: *default
+  username: <%= ENV['TEST_POSTGRES_USER'] %>
+  password: <%= ENV['TEST_POSTGRES_PASSWORD'] %>
+  database: travelnogo_api_test
+  host: <%= ENV['TEST_POSTGRESQL_HOST'] %>
+
+#Heroku db config
+# production:
+#   adapter: postgresql
+#   encoding: unicode
+#   database: travelnogo_api_production
+#   username: travelnogo_api
+#   password: <%= ENV['TRAVELNOGO_API_DATABASE_PASSWORD'] %>
+
+#Kube db config
+production:
+ <<: *default
+ host: <%= ENV['PROD_DB_HOST'] %>
+ username: <%= ENV['PROD_DB_USERNAME'] %>
+ password: <%= ENV['PROD_DB_PASSWORD'] %>
+ pool: 5
+ database: <%= ENV['PROD_DB'] %>
+
+#staging:
+#  adapter: postgresql
+#  encoding: unicode
+#  host: <%#= ENV['POSTGRESQL_HOST'] %>
+#  username: <%#= ENV['POSTGRESQL_USER_NAME'] %>
+#  password: <%#= ENV['POSTGRESQL_PASSWORD'] %>
+#  pool: 5
+#  database: <%#= ENV['POSTGRESQL_DB'] %>

@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: travelnogo-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: travelnogo
+    spec:
+      containers:
+        - name: travelnogo
+          image: gcr.io/travelnogo/travelnogo:latest
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /api/v1/utils/check_liveness
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /api/v1/utils/check_liveness
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+          env:
+            - name: DB_HOST
+              value: 10.109.0.2
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: travelnogo-credentials
+                  key: user
+            - name: TRAVELNOGO_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: travelnogo-credentials
+                  key: password
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: travelnogo-credentials
+                  key: secret_key_base
+            - name: REDIS_HOST
+              value: redis-master
+            - name: REDIS_PORT
+              value: "6379"

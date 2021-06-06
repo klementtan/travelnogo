@@ -1,0 +1,82 @@
+# Ruby CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-ruby/ for more details
+#
+version: 2.1
+
+orbs:
+  slack: circleci/slack@3.4.2
+
+workflows:
+  do_deploy:
+    jobs:
+      - build
+      - deploy: # Use the pre-configured job, deploy-via-git
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/ruby:2.6.4
+        environment:
+          REDIS_URL: redis://localhost:6379
+          RAILS_ENV: test
+          TEST_POSTGRES_PASSWORD: root
+          TEST_POSTGRES_USER: postgres
+          TEST_POSTGRESQL_HOST: 127.0.0.1
+      - image: postgres:9.6
+        environment:
+          POSTGRES_DB: travelnogo_api_test 
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: root
+      - image: redis
+    steps: # a collection of executable commands
+      - checkout # special step to check out source code to working directory
+      # Which version of bundler?
+      - run:
+          name: Install bundler
+          command: sudo gem install bundler -v 2.0.2
+      # Restore bundle cache
+      # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
+      - restore_cache:
+          keys:
+            - rails-bundle-v2-{{ checksum "Gemfile.lock" }}
+            - rails-bundle-v2-
+      - run: # Install Ruby dependencies
+          name: Bundle Install
+          command: bundle check --path vendor/bundle || bundle install --deployment
+      # Store bundle cache for Ruby dependencies
+      - save_cache:
+          key: rails-bundle-v2-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+      - run:
+          name: Wait for DB
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
+      - run:
+          name: Database setup
+          command: bin/rails db:schema:load --trace
+      - run:
+          name: Run rspec in parallel
+          command: |
+            bundle exec rspec
+  deploy:
+     machine:
+       enabled: true
+     steps:
+       - add_ssh_keys:
+          fingerprints:
+            - "3d:29:4f:c0:df:8d:2b:7e:b4:2f:11:a5:6f:cc:f6:56"
+       - run:
+           name: Deploy Over SSH
+           command: |
+             ssh $SSH_USER@$SSH_HOST "cd travelnogo-api && ./script/deploy.sh"
+       - slack/status:
+          success_message: 'Deployed to digital ocean ✅'
+          failure_message: 'Failed to deploy to digital ocean ❌'
+          webhook: '${SLACK_WEBHOOK}'
