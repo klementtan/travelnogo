@@ -7,7 +7,7 @@ Last updated June 2020
 [travelnogo.com](https://travelnogo.com) is a website that helps users determine
 which countries they can travel.
 
-![travelnogo homepage](/travelnogo-fe/public/images/cover.png)
+![travelnogo homepage](/cover.png)
 
 ## Overview
 
